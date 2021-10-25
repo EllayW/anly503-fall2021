@@ -1,0 +1,96 @@
+---
+output:
+  html_fragment
+---
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(plotly)
+library(dplyr)
+library(tidyr)
+library(htmlwidgets)
+
+df <- read.csv('C:/Users/Ella/Desktop/Fall2021/503/A5/anly503-fall2020-a5-EllayW/plot-data.csv')
+df2 <- df%>%
+  select(date, appliance, house,consumption,Month) %>%
+  group_by(date,appliance,house,Month) %>%
+  summarise(consumption = sum(consumption))
+df2$consumption <- round(df2$consumption/1000000,2)
+df2 <- df2[df2$house == 4,]
+df2$house = NULL
+
+## change data type
+df2$appliance <- factor(df2$appliance)
+df2$date <- factor(df2$date)
+df3 <- df2 %>% 
+  group_by(date,appliance) %>%
+  summarise(consumption = sum(consumption)) %>% 
+  ungroup()
+
+df4 <- df3 %>%
+  select(date,consumption) %>%
+  group_by(date) %>%
+  summarise(consumption = round(mean(consumption),2)) %>%
+  ungroup()
+
+df4$appliance = 'Avg Consumption'
+df5 <- rbind(df3,df4)
+
+## @knitr fig
+
+fig <- plot_ly(df5, 
+            x = ~date, 
+            y = ~consumption, 
+            type = 'scatter',
+            mode = 'lines',
+            color = ~appliance, 
+            fill = 'tozeroy',
+            text = ~appliance,
+            hovertemplate = paste("<b>%{text}</b>",
+                                  '<br><b>Date</b>: %{x}',
+                                  '<br><b>Consumption</b>: %{y} M',
+                                  "<extra></extra>"),
+            transforms = list(
+              list(
+                type = 'filter',
+                target = ~appliance,
+                operation = '=',
+                value = unique(df2$appliance)[1]
+              )
+            ))
+
+fig <- fig %>% layout(
+  title = "Daily Consumption(M) by Appliances")
+
+### attempt 2 -- failed
+## DO NOT RUN
+#####################################################
+#fig2 <- shared_data %>% plot_ly() %>%
+ # add_pie(., 
+  #        labels = ~appliance, 
+   #       values = ~consumption, 
+    #      textinfo = 'label+percent') %>%
+  #layout(title = 'Pie Chart of Consumption(M) by Appliances')
+
+
+#fig2 <- fig2 %>% layout(title = 'Pie Chart of Consumption(M) by Appliances',
+                      #xaxis = list(showgrid = FALSE, 
+                       #            zeroline = FALSE, 
+                        #           showticklabels = FALSE),
+                      #yaxis = list(showgrid = FALSE, 
+                       #            zeroline = FALSE, 
+                        #           showticklabels = FALSE))
+
+#subplot(fig,fig2,nrow=2)
+###########################################
+
+#saveWidget(fig, file="plotly.html")
+
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+## run the output
+
+fig
+```
+
+
